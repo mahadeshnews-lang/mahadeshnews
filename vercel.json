@@ -15,10 +15,6 @@
     {
       "src": "/api/(.*)",
       "dest": "backend/server.py"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
     }
   ]
 }

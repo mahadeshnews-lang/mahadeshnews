@@ -11,3 +11,5 @@ google-generativeai
 anyio
 httpx==0.27.0
 yarl==1.22.0
+pymongo
+requests

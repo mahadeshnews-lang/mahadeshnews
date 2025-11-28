@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+motor>=3.6
+pymongo>=4.9
+python-dotenv

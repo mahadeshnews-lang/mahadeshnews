@@ -1,20 +1,16 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "build" }
+  "functions": {
+    "api/**/*.py": {
+      "runtime": "python3.11"
     },
-    {
-      "src": "backend/server.py",
-      "use": "@vercel/python"
+    "backend/**/*.py": {
+      "runtime": "python3.11"
     }
-  ],
+  },
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "backend/server.py"
+      "dest": "/backend/server.py"
     }
   ]
 }

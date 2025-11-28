@@ -1,8 +1,7 @@
 fastapi
 uvicorn
-# Motor and Pymongo versions fixed for Vercel/Pymongo 4.x compatibility
-motor>=3.1.2
-pymongo>=4.3.0
+# Motor aur Pymongo ke compatible aur naye versions
+motor==3.1.2
+pymongo==4.3.0
 python-dotenv
 gunicorn
-

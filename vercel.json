@@ -14,17 +14,11 @@
     },
     {
       "src": "backend/server.py",
-      "use": "@vercel/python@3.0.0",
-      "config": {
-        "runtime": "python3.11"
-      }
+      "use": "@vercel/python@3.0.0"
     },
     {
       "src": "api/*.py",
-      "use": "@vercel/python@3.0.0",
-      "config": {
-        "runtime": "python3.11"
-      }
+      "use": "@vercel/python@3.0.0"
     }
   ],
   "routes": [

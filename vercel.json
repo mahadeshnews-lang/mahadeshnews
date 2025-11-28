@@ -2,14 +2,6 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/*.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "backend/server.py",
-      "use": "@vercel/python"
-    },
-    {
       "src": "src/package.json",
       "use": "@vercel/static-build",
       "config": {
@@ -19,6 +11,14 @@
     {
       "src": "public/**/*",
       "use": "@vercel/static"
+    },
+    {
+      "src": "backend/server.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "api/*.py",
+      "use": "@vercel/python"
     }
   ],
   "routes": [

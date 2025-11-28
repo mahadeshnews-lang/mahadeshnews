@@ -1,5 +1,4 @@
 from fastapi import FastAPI, APIRouter
-from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
@@ -13,21 +12,25 @@ from backend.routes import news
 from backend.services.scheduler import NewsScheduler
 
 
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
-
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
-logger.info(f"motor version: {getattr(motor, '__version__', 'unknown')}")
-logger.info(f"pymongo version: {getattr(pymongo, 'version', getattr(pymongo, '__version__', 'unknown'))}")
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
+
+# --- MongoDB connection ---
+# Vercel से Environment Variables प्राप्त करें
+mongo_url = os.environ.get('MONGO_URI') 
+db_name = os.environ.get('DB_NAME')
+
+# Fatal error check (यह सुनिश्चित करता है कि Key सेट है)
+if not mongo_url:
+    logger.error("FATAL ERROR: MONGO_URI environment variable is not set!")
+    raise EnvironmentError("MONGO_URI environment variable is required and not set!")
+
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+db = client[db_name]
 
 # Create the main app without a prefix
 app = FastAPI(title="Mahadeshnews API", version="1.0.0")
@@ -42,7 +45,6 @@ scheduler = None
 # Define Models
 class StatusCheck(BaseModel):
     model_config = ConfigDict(extra="ignore") 
-    # Ignore MongoDB's _id field
     
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     client_name: str

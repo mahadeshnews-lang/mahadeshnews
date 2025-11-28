@@ -3,11 +3,11 @@
   "builds": [
     {
       "src": "api/*.py",
-      "use": "@vercel/python"  // <--- यहाँ सिर्फ़ बिल्डर का नाम रखें
+      "use": "@vercel/python"
     },
     {
       "src": "backend/server.py",
-      "use": "@vercel/python"  // <--- यहाँ सिर्फ़ बिल्डर का नाम रखें
+      "use": "@vercel/python"
     },
     {
       "src": "src/package.json",

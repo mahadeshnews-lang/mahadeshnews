@@ -1,8 +1,9 @@
 {
+  "{
   "version": 2,
   "builds": [
     {
-      "src": "package.json",
+      "src": "src/package.json",
       "use": "@vercel/static-build",
       "config": {
         "distDir": "build"
@@ -12,13 +13,20 @@
       "src": "public/**/*",
       "use": "@vercel/static"
     },
+    // Python Builder को Python 3.11 का उपयोग करने के लिए कॉन्फ़िगर करें
     {
       "src": "backend/server.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python@3.0.0",
+      "config": {
+        "runtime": "python3.11"
+      }
     },
     {
       "src": "api/*.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python@3.0.0",
+      "config": {
+        "runtime": "python3.11"
+      }
     }
   ],
   "routes": [

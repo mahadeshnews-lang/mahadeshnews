@@ -1,6 +1,6 @@
 fastapi
 uvicorn
-motor==3.5.1
-pymongo==4.3.3
+motor==2.5.1
+pymongo==3.12.3
 python-dotenv
 dnspython

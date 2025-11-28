@@ -1,7 +1,7 @@
 fastapi
 uvicorn
-# Motor aur Pymongo ke compatible aur naye versions
-motor==3.1.2
-pymongo==4.3.0
+# Pymongo ka purana, compatible version
+motor==2.5.1
+pymongo==3.12.3
 python-dotenv
 gunicorn

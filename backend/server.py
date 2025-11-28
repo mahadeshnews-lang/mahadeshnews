@@ -9,8 +9,8 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import List
 import uuid
 from datetime import datetime, timezone
-from routes import news
-from services.scheduler import NewsScheduler
+from backend.routes import news
+from backend.services.scheduler import NewsScheduler
 
 
 ROOT_DIR = Path(__file__).parent

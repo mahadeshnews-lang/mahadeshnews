@@ -1,7 +1,6 @@
 {
   "version": 2,
   "builds": [
-    // 1. FRONTEND BUILD (React/Node.js)
     {
       "src": "src/package.json",
       "use": "@vercel/static-build",
@@ -9,12 +8,10 @@
         "distDir": "build"
       }
     },
-    // 2. STATIC ASSETS (public folder)
     {
       "src": "public/**/*",
       "use": "@vercel/static"
     },
-    // 3. PYTHON BACKEND BUILD
     {
       "src": "backend/server.py",
       "use": "@vercel/python"

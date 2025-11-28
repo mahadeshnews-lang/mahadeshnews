@@ -3,11 +3,11 @@
   "builds": [
     {
       "src": "api/*.py",
-      "use": "@vercel/python@3.0.0" 
+      "use": "@vercel/python@4.0.0" 
     },
     {
       "src": "backend/server.py",
-      "use": "@vercel/python@3.0.0" 
+      "use": "@vercel/python@4.0.0" 
     },
     {
       "src": "src/package.json",

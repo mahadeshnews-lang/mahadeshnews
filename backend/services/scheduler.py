@@ -4,8 +4,8 @@ import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime
-from services.news_fetcher import NewsFetcher
-from services.ai_rewriter import AIRewriter
+from backend.services.news_fetcher import NewsFetcher # <--- सुधारित
+from backend.services.ai_rewriter import AIRewriter   # <--- सुधारित
 from motor.motor_asyncio import AsyncIOMotorClient
 import uuid
 

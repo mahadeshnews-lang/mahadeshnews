@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dreams 10</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0d14;
+  --bg2:#111520;
+  --bg3:#161b2e;
+  --card:#1a2035;
+  --card2:#202640;
+  --accent:#f5a623;
+  --accent2:#ff6b35;
+  --green:#00e676;
+  --red:#ff4444;
+  --blue:#4fc3f7;
+  --purple:#b388ff;
+  --text:#e8eaf6;
+  --muted:#8892b0;
+  --border:#2a3050;
+  --radius:12px;
+}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
+#root{min-height:100vh}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useCallback,useMemo}=React;
+
+const MARKETS=[
+  {id:'sridevi',name:'Sridevi',open:'11:35',close:'12:35',session:'DAY'},
+  {id:'timebazaar',name:'Time Bazaar',open:'13:00',close:'14:00',session:'DAY'},
+  {id:'madhurday',name:'Madhur Day',open:'13:30',close:'14:30',session:'DAY'},
+  {id:'milanday',name:'Milan Day',open:'15:00',close:'17:00',session:'DAY'},
+  {id:'rajdhaniday',name:'Rajdhani Day',open:'15:15',close:'17:15',session:'DAY'},
+  {id:'supremeday',name:'Supreme Day',open:'15:35',close:'17:35',session:'DAY'},
+  {id:'kalyan',name:'Kalyan',open:'16:35',close:'18:25',session:'DAY'},
+  {id:'sridevinight',name:'Sridevi Night',open:'19:15',close:'20:15',session:'NIGHT'},
+  {id:'madhurnight',name:'Madhur Night',open:'20:30',close:'22:30',session:'NIGHT'},
+  {id:'supremenight',name:'Supreme Night',open:'20:45',close:'22:45',session:'NIGHT'},
+  {id:'milannight',name:'Milan Night',open:'21:10',close:'23:10',session:'NIGHT'},
+  {id:'kalyannight',name:'Kalyan Night',open:'21:20',close:'23:20',session:'NIGHT'},
+  {id:'rajdhaninight',name:'Rajdhani Night',open:'21:30',close:'23:45',session:'NIGHT'},
+  {id:'mainbazar',name:'Main Bazar',open:'21:35',close:'00:05',session:'NIGHT'},
+];
+
+const CONTEST_FIELDS=[
+  {key:'sangam',label:'Sangam',hint:'e.g. 123-61-678',pts:1000, validate:v=>/^\d{3}-\d{2}-\d{3}$/.test(v),'errMsg':'Format: 123-61-678'},
+  {key:'halfSangam',label:'Half Sangam',hint:'e.g. 123-65',pts:900, validate:v=>/^\d{3}-\d{2}$/.test(v),'errMsg':'Format: 123-65'},
+  {key:'triplePenal',label:'Triple Penal',hint:'e.g. 111, 222',pts:800, validate:v=>/^\d{3}$/.test(v)&&v[0]===v[1]&&v[1]===v[2],'errMsg':'All 3 digits must be same'},
+  {key:'dpPenalOpen',label:'DP Penal Open',hint:'e.g. 166',pts:700, validate:v=>/^\d{3}$/.test(v)&&((v[0]===v[1]&&v[1]!==v[2])||(v[0]===v[2]&&v[0]!==v[1])||(v[1]===v[2]&&v[0]!==v[1])),'errMsg':'Exactly 2 same digits'},
+  {key:'dpPenalClose',label:'DP Penal Close',hint:'e.g. 224',pts:600, validate:v=>/^\d{3}$/.test(v)&&((v[0]===v[1]&&v[1]!==v[2])||(v[0]===v[2]&&v[0]!==v[1])||(v[1]===v[2]&&v[0]!==v[1])),'errMsg':'Exactly 2 same digits'},
+  {key:'spPenalOpen',label:'SP Penal Open',hint:'3 digits',pts:500, validate:v=>/^\d{3}$/.test(v),'errMsg':'Enter 3 digits'},
+  {key:'spPenalClose',label:'SP Penal Close',hint:'3 digits',pts:400, validate:v=>/^\d{3}$/.test(v),'errMsg':'Enter 3 digits'},
+  {key:'jodi',label:'Jodi',hint:'2 digits',pts:300, validate:v=>/^\d{2}$/.test(v),'errMsg':'Enter exactly 2 digits'},
+  {key:'ankOpen',label:'Ank Open',hint:'1 digit',pts:200, validate:v=>/^\d{1}$/.test(v),'errMsg':'Enter exactly 1 digit'},
+  {key:'ankClose',label:'Ank Close',hint:'1 digit',pts:100, validate:v=>/^\d{1}$/.test(v),'errMsg':'Enter exactly 1 digit'},
+];
+
+const ls=(k,d=null)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}};
+const ss=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+
+function timeToMins(t){ if(!t)return 0; const[h,m]=t.split(':').map(Number); return h*60+m; }
+function nowMins(){ const n=new Date(); return n.getHours()*60+n.getMinutes(); }
+
+function getMarketStatus(market){
+  const now=nowMins();
+  const open=timeToMins(market.open);
+  const close=timeToMins(market.close);
+  if(market.id==='mainbazar'){
+    if(now>=open||now<5)return'LIVE';
+    if(now<open&&open-now<=30)return'SOON';
+    return'UPCOMING';
+  }
+  if(now<open){ if(open-now<=30)return'SOON'; return'UPCOMING'; }
+  if(now>=open&&now<=close)return'LIVE';
+  return'CLOSED';
+}
+
+function formatTime(t){
+  if(!t)return'';
+  const[h,m]=t.split(':').map(Number);
+  const ampm=h>=12?'PM':'AM';
+  const h12=h%12||12;
+  return`${h12}:${m.toString().padStart(2,'0')} ${ampm}`;
+}
+
+const Icon=({name,size=20,color='currentColor'})=>{
+  const icons={
+    home:<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+    trophy:<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="11"/><path d="M7 4v7a5 5 0 0010 0V4"/><path d="M5 4h14"/></svg>,
+    wallet:<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 3H8l-4 4h16l-4-4z"/></svg>,
+    user:<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+    settings:<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83"/></svg>,
+    google:<svg width={size} height={size} viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>,
+    chart:<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+  };
+  return icons[name]||null;
+};
+
+const StatusBadge=({status})=>{
+  const map={
+    UPCOMING:{bg:'#1a2035',color:'#8892b0',text:'UPCOMING'},
+    SOON:{bg:'#1a2b1a',color:'#00e676',text:'OPEN SOON'},
+    LIVE:{bg:'#2a1a1a',color:'#ff4444',text:'● LIVE'},
+    CLOSED:{bg:'#1a1a2a',color:'#4fc3f7',text:'RESULT TODAY'},
+  };
+  const s=map[status]||map.CLOSED;
+  return(
+    <span style={{background:s.bg,color:s.color,fontSize:'10px',fontWeight:700, padding:'3px 8px',borderRadius:'20px',letterSpacing:'0.8px', fontFamily:'Rajdhani',border:`1px solid ${s.color}33`}}>
+      {s.text}
+    </span>
+  );
+};
+
+function App(){
+  const [user,setUser]=useState(()=>ls('d10_user',null));
+  const [tab,setTab]=useState('home');
+  const [markets,setMarkets]=useState(()=>ls('d10_markets',MARKETS));
+  const [contests,setContests]=useState(()=>ls('d10_contests',[]));
+  const [entries,setEntries]=useState(()=>ls('d10_entries',[]));
+  const [results,setResults]=useState(()=>ls('d10_results',{}));
+  const [modal,setModal]=useState(null);
+
+  useEffect(()=>{ss('d10_markets',markets)},[markets]);
+  useEffect(()=>{ss('d10_contests',contests)},[contests]);
+  useEffect(()=>{ss('d10_entries',entries)},[entries]);
+  useEffect(()=>{ss('d10_results',results)},[results]);
+  useEffect(()=>{ss('d10_user',user)},[user]);
+
+  const isAdmin=user&&user.email==='admin@dreams10.com';
+
+  function login(isAdminLogin=false){
+    const u=isAdminLogin ?{name:'Admin',email:'admin@dreams10.com',uid:'admin',wallet:99999,isAdmin:true} :{name:'Rahul Sharma',email:'user@gmail.com',uid:'user1',wallet:500,isAdmin:false};
+    setUser(u); setTab('home');
+  }
+
+  function logout(){setUser(null);setTab('home');}
+
+  function joinContest(contest,formData){
+    if(!user)return;
+    if(user.wallet<contest.entryFee){alert('Insufficient balance!');return;}
+    const entry={ id:`e_${Date.now()}`, contestId:contest.id, marketId:contest.marketId, userId:user.uid, userName:user.name, formData, joinedAt:new Date().toISOString(), points:0,score:null };
+    setEntries(prev=>[...prev,entry]);
+    setUser(prev=>({...prev,wallet:prev.wallet-contest.entryFee}));
+    setModal({type:'success',message:'Contest Joined!'});
+  }
+
+  const ctx={user,setUser,tab,setTab,markets,setMarkets,contests,setContests,entries,results,isAdmin,modal,setModal,login,logout,joinContest};
+
+  if(!user) return <LoginScreen login={login}/>;
+
+  return(
+    <div style={{maxWidth:'480px',margin:'0 auto',minHeight:'100vh', display:'flex',flexDirection:'column',position:'relative'}}>
+      <Header ctx={ctx}/>
+      <div style={{flex:1,paddingBottom:'70px',overflowY:'auto'}}>
+        {tab==='home'&&<HomeScreen ctx={ctx}/>}
+        {tab==='contests'&&<ContestsScreen ctx={ctx}/>}
+        {tab==='results'&&<ResultsScreen ctx={ctx}/>}
+        {tab==='wallet'&&<WalletScreen ctx={ctx}/>}
+        {tab==='profile'&&<ProfileScreen ctx={ctx}/>}
+        {tab==='admin'&&isAdmin&&<AdminScreen ctx={ctx}/>}
+      </div>
+      <BottomNav ctx={ctx}/>
+      {modal&&<Modal modal={modal} onClose={()=>setModal(null)}/>}
+    </div>
+  );
+}
+
+function LoginScreen({login}){
+  return(
+    <div style={{minHeight:'100vh',background:'var(--bg)',display:'flex', flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'24px'}}>
+      <div style={{marginBottom:'40px',textAlign:'center'}}>
+        <div style={{fontFamily:'Orbitron',fontSize:'36px',fontWeight:900, background:'linear-gradient(135deg,#f5a623,#ff6b35)', WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent', letterSpacing:'2px',marginBottom:'8px'}}> DREAMS 10 </div>
+        <div style={{color:'var(--muted)',fontSize:'14px',letterSpacing:'3px', fontFamily:'Rajdhani',fontWeight:500}}>NUMBER PREDICTION ARENA</div>
+      </div>
+      <div style={{background:'var(--card)',borderRadius:'20px',padding:'32px 24px', width:'100%',maxWidth:'340px',border:'1px solid var(--border)'}}>
+        <button onClick={()=>login(false)} style={{width:'100%',background:'#fff',color:'#333',border:'none', borderRadius:'12px',padding:'14px',fontSize:'15px',fontWeight:600, cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center', gap:'10px',marginBottom:'12px',fontFamily:'Inter'}}>
+          <Icon name="google" size={20}/> Continue with Google
+        </button>
+        <button onClick={()=>login(true)} style={{width:'100%',background:'linear-gradient(135deg,#f5a623,#ff6b35)', color:'#000',border:'none',borderRadius:'12px',padding:'14px', fontSize:'15px',fontWeight:700,cursor:'pointer', fontFamily:'Rajdhani',letterSpacing:'1px'}}> 🔐 ADMIN LOGIN </button>
+      </div>
+    </div>
+  );
+}
+
+function Header({ctx}){
+  const{user,tab,setTab,isAdmin}=ctx;
+  return(
+    <div style={{background:'var(--bg2)',borderBottom:'1px solid var(--border)', padding:'12px 16px',display:'flex',alignItems:'center', justifyContent:'space-between',position:'sticky',top:0,zIndex:100}}>
+      <div style={{fontFamily:'Orbitron',fontSize:'18px',fontWeight:900, color:'var(--accent)'}}>DREAMS 10</div>
+      <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
+        <div style={{background:'var(--card)',border:'1px solid var(--border)', borderRadius:'20px',padding:'4px 10px',display:'flex', alignItems:'center',gap:'6px'}}>
+          <span style={{color:'var(--accent)',fontSize:'14px'}}>₹</span>
+          <span style={{color:'var(--text)',fontSize:'13px',fontWeight:600}}>{(user.wallet||0).toLocaleString()}</span>
+        </div>
+        {isAdmin&&<button onClick={()=>setTab('admin')} style={{background:tab==='admin'?'var(--accent)':'var(--card)', border:'1px solid var(--border)',borderRadius:'8px', padding:'6px'}}><Icon name="settings" size={16} color={tab==='admin'?'#000':'var(--muted)'}/></button>}
+      </div>
+    </div>
+  );
+}
+
+function BottomNav({ctx}){
+  const{tab,setTab}=ctx;
+  const items=[{id:'home',i:'home',l:'Home'},{id:'contests',i:'trophy',l:'Contests'},{id:'results',i:'chart',l:'Results'},{id:'wallet',i:'wallet',l:'Wallet'},{id:'profile',i:'user',l:'Profile'}];
+  return(
+    <div style={{position:'fixed',bottom:0,left:'50%',transform:'translateX(-50%)', width:'100%',maxWidth:'480px',background:'var(--bg2)', borderTop:'1px solid var(--border)',display:'flex',zIndex:100}}>
+      {items.map(n=>(
+        <button key={n.id} onClick={()=>setTab(n.id)} style={{flex:1,background:'none',border:'none',padding:'10px 0 6px', cursor:'pointer',display:'flex',flexDirection:'column', alignItems:'center',gap:'3px', color:tab===n.id?'var(--accent)':'var(--muted)'}}>
+          <Icon name={n.i} size={20} color={tab===n.id?'#f5a623':'#8892b0'}/>
+          <span style={{fontSize:'10px',fontFamily:'Rajdhani'}}>{n.l}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function HomeScreen({ctx}){
+  const{markets}=ctx;
+  return(
+    <div style={{padding:'16px'}}>
+      <div style={{fontFamily:'Rajdhani',fontSize:'16px',fontWeight:700, color:'var(--muted)',marginBottom:'10px'}}>AVAILABLE MARKETS</div>
+      <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+        {markets.map(m=>(
+          <div key={m.id} style={{background:'var(--card)',borderRadius:'14px', border:'1px solid var(--border)', padding:'14px'}}>
+            <div style={{display:'flex',justifyContent:'space-between'}}>
+              <div style={{fontFamily:'Rajdhani',fontSize:'18px',fontWeight:700}}>{m.name}</div>
+              <StatusBadge status={getMarketStatus(m)}/>
+            </div>
+            <div style={{color:'var(--muted)',fontSize:'12px',marginTop:'4px'}}>{formatTime(m.open)} – {formatTime(m.close)}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ContestsScreen({ctx}){
+  const{contests,markets,joinContest,user}=ctx;
+  const[sel,setSel]=useState(null);
+  return(
+    <div style={{padding:'16px'}}>
+      {contests.length===0?<div style={{textAlign:'center',color:'var(--muted)',marginTop:'40px'}}>No contests active</div> : contests.map(c=>{
+        const m=markets.find(x=>x.id===c.marketId);
+        return(
+          <div key={c.id} style={{background:'var(--card)',borderRadius:'14px', border:'1px solid var(--border)',padding:'16px',marginBottom:'12px'}}>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:'10px'}}>
+              <div style={{fontWeight:700}}>{m?.name}</div>
+              <div style={{color:'var(--accent)'}}>Entry: ₹{c.entryFee}</div>
+            </div>
+            <button onClick={()=>setSel(sel===c.id?null:c.id)} style={{width:'100%',background:'linear-gradient(135deg,#f5a623,#ff6b35)', color:'#000',border:'none',borderRadius:'10px',padding:'12px', fontWeight:700}}>JOIN CONTEST</button>
+            {sel===c.id&&<ContestEntryForm contest={c} onSubmit={(d)=>{joinContest(c,d);setSel(null);}} onCancel={()=>setSel(null)}/>}
+          </div>
+        )
+      })}
+    </div>
+  );
+}
+
+function ContestEntryForm({contest,onSubmit,onCancel}){
+  const[form,setForm]=useState({});
+  return(
+    <div style={{marginTop:'14px',padding:'10px',background:'var(--bg3)', borderRadius:'12px'}}>
+      {CONTEST_FIELDS.map(f=>(
+        <div key={f.key} style={{marginBottom:'8px'}}>
+          <label style={{fontSize:'12px',color:'var(--muted)'}}>{f.label}</label>
+          <input onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))} placeholder={f.hint} style={{width:'100%',background:'var(--card)', border:'1px solid var(--border)',borderRadius:'8px',padding:'8px',color:'#fff'}}/>
+        </div>
+      ))}
+      <div style={{display:'flex',gap:'10px',marginTop:'10px'}}>
+        <button onClick={onCancel} style={{flex:1,padding:'10px',borderRadius:'8px'}}>CANCEL</button>
+        <button onClick={()=>onSubmit(form)} style={{flex:2,background:'var(--green)',padding:'10px',borderRadius:'8px',color:'#000'}}>CONFIRM</button>
+      </div>
+    </div>
+  );
+}
+
+function ResultsScreen(){ return <div style={{padding:'20px',textAlign:'center'}}>Results will appear here</div>; }
+function WalletScreen({ctx}){
+  const{user,setUser}=ctx;
+  return (
+    <div style={{padding:'20px'}}>
+      <div style={{background:'var(--card)',padding:'20px',borderRadius:'15px',textAlign:'center'}}>
+        <div style={{color:'var(--muted)'}}>Wallet Balance</div>
+        <div style={{fontSize:'32px',fontWeight:700}}>₹{user.wallet}</div>
+      </div>
+    </div>
+  );
+}
+function ProfileScreen({ctx}){
+  return <div style={{padding:'20px',textAlign:'center'}}>
+    <h2>{ctx.user.name}</h2>
+    <p>{ctx.user.email}</p>
+    <button onClick={ctx.logout} style={{marginTop:'20px',color:'red'}}>LOGOUT</button>
+  </div>;
+}
+function AdminScreen(){ return <div style={{padding:'20px'}}>Admin Settings</div>; }
+
+function Modal({modal,onClose}){
+  return(
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.8)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:999}} onClick={onClose}>
+      <div style={{background:'var(--card)',padding:'30px',borderRadius:'20px',textAlign:'center'}} onClick={e=>e.stopPropagation()}>
+        <div style={{fontSize:'40px'}}>✅</div>
+        <div style={{margin:'15px 0'}}>{modal.message}</div>
+        <button onClick={onClose} style={{background:'var(--accent)',padding:'10px 20px',borderRadius:'8px',border:'none'}}>CLOSE</button>
+      </div>
+    </div>
+  );
+}
+
+const root=ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App/>);
+</script>
+</body>
+</html>
